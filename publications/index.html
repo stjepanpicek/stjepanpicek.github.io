@@ -10,34 +10,44 @@
   <nav class="topnav">
     <span class="brand"><a href="/" style="text-decoration:none;color:inherit;">Stjepan Picek</a></span>
     <a class="" href="/">Home</a>
-      <a class="" href="/students/">Students</a>
-      <a class="active" href="/publications/">Publications</a>
-      <a class="" href="/cv/">CV</a>
-      <a class="" href="/service/">Service</a>
-      <a class="" href="/teaching/">Teaching</a>
-      <a class="" href="/misc/">Misc.</a>
+    <a class="" href="/students/">Students</a>
+    <a class="active" href="/publications/">Publications</a>
+    <a class="" href="/cv/">CV</a>
+    <a class="" href="/service/">Service</a>
+    <a class="" href="/teaching/">Teaching</a>
+    <a class="" href="/misc/">Misc.</a>
   </nav>
 
   <div class="container">
     <aside class="sidebar">
-      <div class="avatar" aria-label="Profile photo placeholder">SP</div>
+      <img class="avatar" src="/assets/profile.png" alt="Stjepan Picek" />
       <div class="name">Stjepan Picek</div>
       <p class="subtitle">Cybersecurity · Cryptology · ML Security</p>
 
       <div class="kv">
-        <span class="badge">Radboud University</span>
         <span class="badge">University of Zagreb</span>
+        <span class="badge">Radboud University</span>
         <span class="badge">University of Bergen</span>
       </div>
 
-      <h3>Follow</h3>
+      <h3>Contact</h3>
       <ul class="follow">
-        <li>📍 Nijmegen / Zagreb</li>
+        <li>📍 Zagreb / Nijmegen</li>
+        <li>✉️ <a href="mailto:stjepan.picek@fer.hr">stjepan.picek@fer.hr</a></li>
         <li>✉️ <a href="mailto:stjepan.picek@ru.nl">stjepan.picek@ru.nl</a></li>
+        <li>🔗 <a href="https://orcid.org/0000-0001-7509-4337">ORCID</a></li>
         <li>🔗 <a href="https://scholar.google.hr/citations?user=C1enS8IAAAAJ&hl=en">Google Scholar</a></li>
         <li>🔗 <a href="https://dblp.org/pid/50/10230.html">DBLP</a></li>
+        <li>🔗 <a href="https://www.linkedin.com/in/stjepan-picek-88907ab8/">LinkedIn</a></li>
         <li>🔗 <a href="https://github.com/stjepanpicek">GitHub</a></li>
       </ul>
+
+      <h3>Address</h3>
+      <div class="small">
+        Department of Electronics, Microelectronics, Computer and Intelligent Systems,<br/>
+        Faculty of Electrical Engineering and Computing,<br/>
+        Unska 3, 10000 Zagreb, Croatia.
+      </div>
 
       <div class="footer">© 2025 Stjepan Picek</div>
     </aside>
@@ -46,36 +56,99 @@
       <section class="card">
   <h1>Publications</h1>
   <p>
-    My full publication list is best kept up-to-date on <a href="https://dblp.org/pid/50/10230.html">DBLP</a> and
-    <a href="https://scholar.google.hr/citations?user=C1enS8IAAAAJ&hl=en">Google Scholar</a>.
+    This page loads my publications live from DBLP:
+    <a href="https://dblp.org/pid/50/10230.html">dblp.org/pid/50/10230</a>.
   </p>
-  <hr />
-  <h2>Selected (award / highlighted)</h2>
 
-  <div class="pub">
-    <div class="title">DARWIN: Survival of the Fittest Fuzzing Mutators</div>
-    <div class="meta">NDSS 2023 · Distinguished Paper Award</div>
+  <div class="controls">
+    <input id="pubSearch" type="search" placeholder="Search title…" />
+    <select id="pubYear">
+      <option value="">All years</option>
+    </select>
   </div>
 
-  <div class="pub">
-    <div class="title">CSI NN: Reverse Engineering of Neural Network Architectures Through Electromagnetic Side Channel</div>
-    <div class="meta">Top Picks in Hardware & Embedded Security 2020 (selected)</div>
-  </div>
-
-  <div class="pub">
-    <div class="title">The Curse of Class Imbalance and Conflicting Metrics with Machine Learning for Side-channel Evaluations</div>
-    <div class="meta">Top Picks in Hardware & Embedded Security 2021 (selected)</div>
-  </div>
-
-  <div class="pub">
-    <div class="title">Make some noise: Unleashing the power of CNNs for profiled side-channel analysis</div>
-    <div class="meta">Top Picks in Hardware & Embedded Security 2022 (Honorable Mention)</div>
-  </div>
-
-  <p class="small">
-    (This page is intentionally short. If you want, I can also generate a structured publication page once you provide a BibTeX file or an exported list from DBLP/Scholar.)
-  </p>
+  <div id="pubStatus" class="small" style="margin-top:10px;">Loading…</div>
+  <div id="pubList" style="margin-top:10px;"></div>
 </section>
+
+<script>
+(function(){
+  const token = encodeURIComponent("author:Stjepan_Picek:");
+  const url = "https://dblp.org/search/publ/api?format=jsonp&h=1000&q=" + token + "&callback=dblpCallback";
+
+  const statusEl = document.getElementById("pubStatus");
+  const listEl = document.getElementById("pubList");
+  const searchEl = document.getElementById("pubSearch");
+  const yearEl = document.getElementById("pubYear");
+
+  let all = [];
+
+  function normalize(s) { return (s || "").toLowerCase(); }
+
+  function render() {
+    const q = normalize(searchEl.value);
+    const y = yearEl.value;
+
+    const filtered = all.filter(p => {
+      const okTitle = !q || normalize(p.title).includes(q);
+      const okYear = !y || String(p.year) === y;
+      return okTitle && okYear;
+    });
+
+    listEl.innerHTML = filtered.map(p => {
+      const authors = (p.authors || []).join(", ");
+      const venue = p.venue ? ` · ${p.venue}` : "";
+      const ee = p.ee ? ` · <a href="${p.ee}">link</a>` : "";
+      return `
+        <div class="pub-item">
+          <div class="pub-title">${p.title}</div>
+          <div class="pub-meta">${authors} · ${p.year}${venue}${ee}</div>
+        </div>`;
+    }).join("");
+
+    statusEl.textContent = `${filtered.length} / ${all.length} items`;
+  }
+
+  function populateYears() {
+    const years = Array.from(new Set(all.map(p => String(p.year)).filter(Boolean))).sort().reverse();
+    yearEl.innerHTML = `<option value="">All years</option>` + years.map(y => `<option value="${y}">${y}</option>`).join("");
+  }
+
+  window.callback = function(x){ window.dblpCallback(x); };
+
+  window.dblpCallback = function(data) {
+    try {
+      const hits = (data && data.result && data.result.hits && data.result.hits.hit) || [];
+      all = hits.map(h => {
+        const info = h.info || {};
+        const authors = info.authors && info.authors.author
+          ? (Array.isArray(info.authors.author) ? info.authors.author : [info.authors.author]).map(a => typeof a === "string" ? a : a.text)
+          : [];
+        const title = Array.isArray(info.title) ? info.title[0] : info.title;
+        return {
+          title: title || "(no title)",
+          year: info.year || "",
+          venue: info.venue || info.type || "",
+          ee: info.ee || "",
+          authors
+        };
+      });
+      populateYears();
+      render();
+      searchEl.addEventListener("input", render);
+      yearEl.addEventListener("change", render);
+    } catch (e) {
+      statusEl.textContent = "Could not parse DBLP response.";
+      console.error(e);
+    }
+  };
+
+  const s = document.createElement("script");
+  s.src = url;
+  s.onerror = function(){ statusEl.textContent = "Failed to load DBLP data (network or API issue)."; };
+  document.head.appendChild(s);
+})();
+</script>
     </main>
   </div>
 </body>
